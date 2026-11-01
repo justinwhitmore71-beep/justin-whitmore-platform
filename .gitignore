@@ -7,3 +7,4 @@ job_assistant/data/vault/
 job_assistant/data/browser_profiles/
 job_assistant/data/backups/
 _backup_*/
+job_assistant/data/cloudflared.exe
