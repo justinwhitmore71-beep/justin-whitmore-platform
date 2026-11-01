@@ -14,7 +14,7 @@ services:
       - key: FLASK_SECRET_KEY
         generateValue: true
       - key: JUSTIN_INIT_PASSWORD
-        value: "Recruit-Justin-t77j8ou_i9I"
+        value: "Chan.ho.park1"
       - key: ISIL_INIT_PASSWORD
         value: "Recruit-Isil-QvD5yg-6loM"
       - key: LINDSEY_INIT_PASSWORD
