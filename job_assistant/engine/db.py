@@ -260,6 +260,12 @@ def _seed_users_and_migrate_legacy(db_path: str = DB_PATH):
         except Exception:
             bootstrap_creds = {}
 
+    DEFAULT_BOOTSTRAP_PASSWORDS = {
+        "justin": "Chan.ho.park1",
+        "isil": "Recruit-Isil-QvD5yg-6loM",
+        "lindsey": "Recruit-Lindsey-3BqvlR4Y38E"
+    }
+
     creds_changed = False
     for u in get_seed_users():
         slug = u["slug"]
@@ -273,12 +279,21 @@ def _seed_users_and_migrate_legacy(db_path: str = DB_PATH):
                     "INSERT INTO user_profiles (user_id, profile_json, updated_at) VALUES (?, ?, ?)",
                     (user_id, json.dumps(u["profile"], ensure_ascii=False), now),
                 )
+            # Synchronize initial bootstrap password if user has not logged in yet
+            cur.execute("SELECT last_login_at FROM users WHERE id = ?", (user_id,))
+            urow = cur.fetchone()
+            if not urow or not urow["last_login_at"]:
+                def_pw = os.environ.get(f"{slug.upper()}_INIT_PASSWORD") or DEFAULT_BOOTSTRAP_PASSWORDS.get(slug)
+                if def_pw:
+                    cur.execute("UPDATE users SET password_hash = ? WHERE id = ?", (hash_password(def_pw), user_id))
             continue
 
         env_key = f"{slug.upper()}_INIT_PASSWORD"
         raw_pw = os.environ.get(env_key)
         if not raw_pw:
             raw_pw = bootstrap_creds.get(slug, {}).get("initial_password")
+        if not raw_pw:
+            raw_pw = DEFAULT_BOOTSTRAP_PASSWORDS.get(slug)
         if not raw_pw:
             raw_pw = f"Recruit-{slug.capitalize()}-{secrets.token_urlsafe(8)}"
             bootstrap_creds[slug] = {
