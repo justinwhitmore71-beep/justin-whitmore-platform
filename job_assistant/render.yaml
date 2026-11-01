@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: justin-whitmore-platform
+    env: python
+    region: frankfurt
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120 job_assistant.dashboard.app:app
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: FORCE_HTTPS_COOKIES
+        value: "1"
+      - key: FLASK_SECRET_KEY
+        generateValue: true
+      - key: JUSTIN_INIT_PASSWORD
+        value: "Recruit-Justin-t77j8ou_i9I"
+      - key: ISIL_INIT_PASSWORD
+        value: "Recruit-Isil-QvD5yg-6loM"
+      - key: LINDSEY_INIT_PASSWORD
+        value: "Recruit-Lindsey-3BqvlR4Y38E"

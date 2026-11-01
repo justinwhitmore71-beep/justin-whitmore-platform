@@ -1,0 +1,137 @@
+{
+  "personal": {
+    "full_name": "Justin Whitmore",
+    "email": "justinwhitmore71@gmail.com",
+    "phone": "+33 6 04 50 25 42",
+    "current_location": "Orléans, France",
+    "citizenship": ["EU Citizen", "US Citizen"],
+    "work_authorization": "Full EU & US work authorization (no visa sponsorship required)"
+  },
+  "constraints": {
+    "car_available": false,
+    "transit_requirement": "Must be reachable by public transit (tram/bus in Orléans), walkable, or remote. Avoid rural locations requiring a personal car.",
+    "excluded_locations": ["Malta"],
+    "target_locations": [
+      { "name": "Orléans & surrounding areas", "country": "France", "priority": "high", "note": "Public transit accessible only" },
+      { "name": "France Nationwide", "country": "France", "priority": "medium", "note": "Transit accessible or remote" },
+      { "name": "Lisbon", "country": "Portugal", "priority": "high", "note": "Transit accessible or relocation" },
+      { "name": "Remote", "country": "Any", "priority": "high", "note": "Accessible from France / EU / US" },
+      { "name": "International", "country": "Any", "priority": "medium", "note": "Must offer relocation assistance" }
+    ],
+    "languages": {
+      "english": { "level": "C2 / Native Fluent", "can_work_professionally": true },
+      "french": { "level": "Professional Working Proficiency (B2 / solid B1-B2)", "can_work_professionally": true, "note": "Capable of professional communication and day-to-day operations in French." }
+    },
+    "immediate_income_open": true,
+    "practical_roles_open": true,
+    "france_anything_priority": {
+      "active": true,
+      "primary_motivation": "Secure immediate employment/contract in France to support family reunification (girlfriend and daughter).",
+      "acceptable_roles": [
+        "Fast Food / Crew Member / Restauration Rapide (McDonald's, Burger King, etc.)",
+        "Cleaning / Janitorial / Sanitation / Plongeur / Agent d'entretien",
+        "Warehouse / Order Picking / Manutentionnaire / Préparateur de commandes",
+        "Retail / Supermarket / Mise en rayon / Hôte de caisse / Employé libre service",
+        "Production / Packaging / Conditionnement / Ouvrier polyvalent",
+        "Dishwashing / Kitchen Porter / Aide de cuisine",
+        "Any legal entry-level employment in Orléans / France accessible without a car"
+      ]
+    }
+  },
+  "education": [
+    {
+      "degree": "BA in Physics",
+      "institution": "University of San Diego",
+      "year": 2012
+    }
+  ],
+  "experience": [
+    {
+      "id": "captain_words",
+      "title": "Freelance Content Writer",
+      "company": "Captain Words",
+      "location": "Remote",
+      "start_date": "2024",
+      "end_date": "Present",
+      "highlights": [
+        "Write clear, researched English articles to client briefs and deadlines.",
+        "Work independently with minimal supervision and high attention to detail."
+      ]
+    },
+    {
+      "id": "quidelortho",
+      "title": "International Logistics & Customer Service Coordinator",
+      "company": "QuidelOrtho",
+      "location": "Prague, Czech Republic",
+      "start_date": "Feb 2025",
+      "end_date": "Jun 2026",
+      "sap_experience": ["VA32", "ZBL", "ZDR", "credit blocks", "ship-to changes", "export workflows", "outbound deliveries"],
+      "documentation": ["Invoices", "Packing lists", "Certificates of Analysis (CoA)", "Airway Bills (AWB)", "EX-1", "Certificates of Origin", "Outbound deliveries"],
+      "highlights": [
+        "Main point of contact for international B2B customers in 9 countries, handling questions on orders, invoices, and deliveries.",
+        "Owned each case from first contact to resolution, giving customers proactive, clear updates, including on urgent cold-chain shipments.",
+        "Cross-functional collaboration with Sales, Finance, Supply Chain, and Logistics to resolve bottlenecks rapidly.",
+        "Maintained high precision in SAP daily operations, processing order changes, credit blocks, delivery tracking, and export paperwork."
+      ]
+    },
+    {
+      "id": "accolade",
+      "title": "Claims & Benefits Specialist",
+      "company": "Accolade",
+      "location": "Remote / Hybrid",
+      "start_date": "May 2023",
+      "end_date": "Sep 2024",
+      "highlights": [
+        "Supported customers with complex, high-volume cases by phone and digital channels, explaining detailed information clearly and simply.",
+        "Investigated non-standard issues with internal teams and external providers, seeing each case through to resolution.",
+        "Handled sensitive personal and health information with strict confidentiality and meticulous case documentation."
+      ]
+    },
+    {
+      "id": "netbilling",
+      "title": "Sales & Customer Service Manager",
+      "company": "Netbilling",
+      "location": "Remote",
+      "start_date": "Mar 2022",
+      "end_date": "Dec 2022",
+      "highlights": [
+        "Managed sales and customer service operations for an online payment processing platform.",
+        "Handled billing inquiries, account setups, dispute resolution, and escalated customer tickets via phone and email.",
+        "Coached team members, set operational priorities, and served as final escalation point for dissatisfied clients."
+      ]
+    },
+    {
+      "id": "besedo",
+      "title": "Sports Trading Manager / Customer Service Lead",
+      "company": "Besedo",
+      "location": "Malta",
+      "start_date": "Jun 2018",
+      "end_date": "Oct 2021",
+      "highlights": [
+        "Led a customer service and sports trading operational team of ~15 employees in a fast-paced 24/7 international environment.",
+        "Managed shift priorities, maintaining calm decision-making and accuracy under extreme time pressure.",
+        "Coached team members on standard operating procedures, KPIs, and quality standards while resolving complex customer and partner escalations.",
+        "Extensive experience in iGaming, sports trading, live risk monitoring, and operational compliance."
+      ]
+    }
+  ],
+  "technical_and_systems": {
+    "erp_crm": ["SAP (VA32, ZBL, ZDR, Order Management, Deliveries)", "CRM & Ticketing systems", "Case management platforms"],
+    "office_tools": ["Microsoft Excel (formulas, tracking)", "Microsoft Word", "Microsoft Outlook"],
+    "technology": ["AI tools and digital platforms", "Python scripting and automation tools", "Independent software troubleshooting"],
+    "logistics_export": ["Cold-chain tracking", "Incoterms / Customs EX-1", "AWB & Air Freight", "Certificates of Origin", "Certificates of Analysis"]
+  },
+  "target_roles": [
+    "Customer Support Representative / Specialist",
+    "Customer Experience / CX Specialist",
+    "Customer Success Manager / Specialist",
+    "Customer Operations Specialist",
+    "Order Management Specialist",
+    "Export Operations Coordinator",
+    "Logistics Coordinator / Specialist",
+    "Supply Chain Assistant / Specialist",
+    "English-speaking Administrative Assistant",
+    "Warehouse Associate / Order Picker / Logistics Operator",
+    "Production Associate / Operator"
+  ]
+}

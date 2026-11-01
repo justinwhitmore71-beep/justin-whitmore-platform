@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Shared read-only vacancy catalog for signed-in users
+    match /vacancies/{vacancyId} {
+      allow read: if request.auth != null;
+      allow write: if false; // Managed exclusively by backend service account
+    }
+
+    // Strict per-user isolation: no user (not even admin client-side) can read another user's private records
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

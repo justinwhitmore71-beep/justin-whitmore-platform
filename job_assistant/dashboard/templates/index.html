@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Justin Whitmore &bull; Career Operations Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Add Custom Source Modal -->
+  <div id="modal-add-source" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-brand-card border border-brand-border w-full max-w-lg rounded-2xl p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-brand-border pb-3">
+        <h3 class="text-sm font-bold text-white">Add Target Site or Career Board</h3>
+        <button onclick="toggleAddSourceModal()" class="text-gray-400 hover:text-white text-lg font-bold">&times;</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-gray-400 mb-1">Company or Source Name *</label>
+          <input id="src-name" type="text" placeholder="e.g. Revolut, Jobs.cz Prague, or Sanofi"
+            class="w-full bg-[#101216] border border-brand-border rounded-lg px-3 py-2 text-white">
+        </div>
+        <div>
+          <label class="block text-gray-400 mb-1">Source Type</label>
+          <select id="src-type" class="w-full bg-[#101216] border border-brand-border rounded-lg px-3 py-2 text-white">
+            <option value="company_career_page">Company Career Board (Greenhouse, Lever, Ashby, Direct)</option>
+            <option value="job_board_url">Regional Job Board URL / Webpage</option>
+            <option value="custom_search_query">Targeted Search Query (Keywords + Location)</option>
+            <option value="rss_feed">RSS Job Feed</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-gray-400 mb-1">Target Webpage / Career Board URL (Optional)</label>
+          <input id="src-url" type="url" placeholder="https://boards.greenhouse.io/... or https://jobs.cz/..."
+            class="w-full bg-[#101216] border border-brand-border rounded-lg px-3 py-2 text-white">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-gray-400 mb-1">Target Keywords</label>
+            <input id="src-kws" type="text" placeholder="e.g. support, onboarding, AML"
+              class="w-full bg-[#101216] border border-brand-border rounded-lg px-3 py-2 text-white">
+          </div>
+          <div>
+            <label class="block text-gray-400 mb-1">Location Filter</label>
+            <input id="src-loc" type="text" placeholder="e.g. Prague, Lisbon, Remote"
+              class="w-full bg-[#101216] border border-brand-border rounded-lg px-3 py-2 text-white">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end space-x-2 pt-3 border-t border-brand-border">
+        <button onclick="toggleAddSourceModal()" class="px-4 py-2 bg-[#2A2E39] text-xs font-semibold text-white rounded-lg">Cancel</button>
+        <button onclick="saveCustomSource()" class="px-4 py-2 bg-brand-lime text-brand-dark font-bold text-xs rounded-lg shadow">
+          Save & Add to My Recruiter
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              lime: '#C6F432',
+              dark: '#101216',
+              card: '#181B22',
+              border: '#2A2E39',
+              coral: '#FF6B5B'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #101216; color: #E2E8F0; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #101216; }
+    ::-webkit-scrollbar-thumb { background: #2A2E39; border-radius: 3px; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans">
+
+  <!-- Top Navigation Header -->
+  <header class="border-b border-brand-border bg-[#14171D]/95 backdrop-blur sticky top-0 z-30 px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center space-x-3">
+      <div id="user-avatar" class="w-9 h-9 rounded-xl bg-brand-lime flex items-center justify-center font-bold text-brand-dark text-sm shadow">
+        AI
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <h1 id="header-user-title" class="text-sm font-bold text-white">My AI Recruiter</h1>
+          <span id="header-verify-badge" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase"></span>
+        </div>
+        <p id="header-user-sub" class="text-xs text-gray-400">Private Recruitment Workspace</p>
+      </div>
+    </div>
+
+    <!-- Main View Switcher -->
+    <nav class="flex items-center space-x-1 bg-[#101216] p-1 rounded-xl border border-brand-border text-xs font-semibold">
+      <button onclick="switchMainView('dashboard')" id="nav-dashboard" class="px-3 py-1.5 rounded-lg bg-brand-card text-brand-lime">Dashboard</button>
+      <button onclick="switchMainView('profile')" id="nav-profile" class="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white">Profile, CV & Schedule</button>
+      <button onclick="switchMainView('privacy')" id="nav-privacy" class="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white">Privacy & Security</button>
+      <button onclick="switchMainView('admin')" id="nav-admin" class="hidden px-3 py-1.5 rounded-lg text-amber-300 hover:text-white">Admin Console</button>
+    </nav>
+
+    <div class="flex items-center space-x-2.5">
+      <button id="btn-scan" onclick="triggerScan()" class="px-3.5 py-2 bg-brand-lime text-brand-dark hover:bg-[#b5e322] font-bold text-xs rounded-lg transition shadow">
+        Run My Discovery Sweep
+      </button>
+      <button onclick="logout()" class="px-3 py-2 border border-brand-border hover:bg-brand-card text-gray-300 text-xs rounded-lg transition">
+        Sign Out
+      </button>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
+
+    <!-- Verification Alert Banner (Shown for Işıl & Lindsey until verified) -->
+    <div id="verify-banner" class="hidden bg-amber-500/10 border border-amber-500/40 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
+      <div class="space-y-1 max-w-3xl">
+        <div class="text-xs font-bold text-amber-300 uppercase tracking-wide">Action Needed: Verify Preliminary Profile Details Before Generating Applications</div>
+        <p class="text-xs text-gray-300">Your recruiter is actively discovering and scoring opportunities, and strictly locks CV/application generation until you confirm your preliminary dates, titles, degrees, or tools so nothing unverified ever enters an application.</p>
+      </div>
+      <button onclick="switchMainView('profile')" class="px-4 py-2 bg-amber-400 text-brand-dark font-bold text-xs rounded-lg hover:bg-amber-300 transition">
+        Review & Verify My Profile &rarr;
+      </button>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- VIEW 1: PERSONAL RECRUITMENT DASHBOARD                             -->
+    <!-- ================================================================== -->
+    <section id="view-dashboard" class="space-y-6">
+
+      <!-- 8 Pipeline Statistics Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+        <div class="bg-brand-card border border-brand-border rounded-xl p-3.5">
+          <div class="text-[11px] text-gray-400">New Jobs</div>
+          <div class="text-xl font-bold text-white mt-0.5" id="stat-new">-</div>
+        </div>
+        <div class="bg-brand-card border border-brand-border rounded-xl p-3.5">
+          <div class="text-[11px] text-brand-lime font-semibold">Best Matches</div>
+          <div class="text-xl font-bold text-brand-lime mt-0.5" id="stat-high">-</div>
+        </div>
+        <div class="bg-brand-card border border-brand-border rounded-xl p-3.5">
+          <div class="text-[11px] text-sky-400">Saved</div>
+          <div class="text-xl font-bold text-sky-400 mt-0.5" id="stat-saved">-</div>
+        </div>
+        <div class="bg-brand-card border border-brand-border rounded-xl p-3.5">
+          <div class="text-[11px] text-amber-300">Awaiting Approval</div>
+          <div class="text-xl font-bold text-amber-300 mt-0.5" id="stat-awaiting">-</div>
+        </div>
+        <div class="bg-brand-card border border-brand-border rounded-xl p-3.5">
+          <div class="text-[11px] text-purple-400">Submitted</div>
+          <div class="text-xl font-bold text-purple-400 mt-0.5" id="stat-applied">-</div>
+        </div>
+        <div class="bg-brand-card border border-brand-border rounded-xl p-3.5">
+          <div class="text-[11px] text-emerald-400">Interviews</div>
+          <div class="text-xl font-bold text-emerald-400 mt-0.5" id="stat-interviews">-</div>
+        </div>
+        <div class="bg-brand-card border border-brand-border rounded-xl p-3.5">
+          <div class="text-[11px] text-brand-coral">Follow-ups Due</div>
+          <div class="text-xl font-bold text-brand-coral mt-0.5" id="stat-followup">-</div>
+        </div>
+        <div class="bg-brand-card border border-brand-border rounded-xl p-3.5">
+          <div class="text-[11px] text-gray-400">Rejections</div>
+          <div class="text-xl font-bold text-gray-300 mt-0.5" id="stat-rejected">-</div>
+        </div>
+      </div>
+
+      <!-- Comprehensive Part 9 Filters -->
+      <div class="bg-brand-card border border-brand-border rounded-xl p-4 space-y-3">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-9 gap-2.5 text-xs">
+          <div>
+            <label class="block text-[11px] text-gray-400 mb-1">Match Score</label>
+            <select id="f-score" onchange="loadJobs()" class="w-full bg-[#101216] border border-brand-border rounded-lg px-2.5 py-1.5 text-white">
+              <option value="80">80+ Strong</option>
+              <option value="70" selected>70+ Good</option>
+              <option value="50">50+ Viable</option>
+              <option value="0">All (0+)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] text-gray-400 mb-1">Status</label>
+            <select id="f-status" onchange="loadJobs()" class="w-full bg-[#101216] border border-brand-border rounded-lg px-2.5 py-1.5 text-white">
+              <option value="all">All Active</option>
+              <option value="discovered">New / Discovered</option>
+              <option value="saved">Saved</option>
+              <option value="awaiting_approval">Awaiting Approval</option>
+              <option value="ready_to_apply">Ready to Apply</option>
+              <option value="applied">Submitted</option>
+              <option value="interviewing">Interviews</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] text-gray-400 mb-1">Remote Mode</label>
+            <select id="f-remote" onchange="loadJobs()" class="w-full bg-[#101216] border border-brand-border rounded-lg px-2.5 py-1.5 text-white">
+              <option value="all">All Modes</option>
+              <option value="remote">Remote</option>
+              <option value="hybrid">Hybrid</option>
+              <option value="on-site">On-site</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] text-gray-400 mb-1">Country</label>
+            <select id="f-country" onchange="loadJobs()" class="w-full bg-[#101216] border border-brand-border rounded-lg px-2.5 py-1.5 text-white">
+              <option value="all">All Countries</option>
+              <option value="Remote">Remote (Europe/Worldwide)</option>
+              <option value="Czech Republic">Czech Republic (Prague)</option>
+              <option value="France">France</option>
+              <option value="Portugal">Portugal (Lisbon/Porto)</option>
+              <option value="Spain">Spain</option>
+              <option value="Germany">Germany</option>
+              <option value="Ireland">Ireland</option>
+              <option value="Netherlands">Netherlands</option>
+              <option value="Cyprus">Cyprus</option>
+              <option value="Poland">Poland</option>
+              <option value="Estonia">Estonia</option>
+              <option value="Malta">Malta</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] text-gray-400 mb-1">City / Region Search</label>
+            <input id="f-location" oninput="loadJobs()" type="text" placeholder="e.g. Madrid, Limassol, Prague, Dublin"
+              class="w-full bg-[#101216] border border-brand-border rounded-lg px-2.5 py-1.5 text-white">
+          </div>
+          <div>
+            <label class="block text-[11px] text-gray-400 mb-1">Job Category</label>
+            <select id="f-category" onchange="loadJobs()" class="w-full bg-[#101216] border border-brand-border rounded-lg px-2.5 py-1.5 text-white">
+              <option value="all">All Categories</option>
+              <option value="Customer Support">Support & Operations</option>
+              <option value="Export, SAP">Export, SAP & Logistics</option>
+              <option value="Onboarding">Onboarding & Teaching</option>
+              <option value="iGaming">iGaming, AML & Player Ops</option>
+              <option value="Risk, Fraud">Risk, Fraud & Payments</option>
+              <option value="practical">Practical Stability</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] text-gray-400 mb-1">Seniority</label>
+            <select id="f-seniority" onchange="loadJobs()" class="w-full bg-[#101216] border border-brand-border rounded-lg px-2.5 py-1.5 text-white">
+              <option value="all">All Levels</option>
+              <option value="Junior">Junior / Associate</option>
+              <option value="Mid-Level">Mid-Level</option>
+              <option value="Senior">Senior</option>
+              <option value="Manager">Manager / Lead</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] text-gray-400 mb-1">Company</label>
+            <input id="f-company" oninput="loadJobs()" type="text" placeholder="Filter company"
+              class="w-full bg-[#101216] border border-brand-border rounded-lg px-2.5 py-1.5 text-white">
+          </div>
+          <div>
+            <label class="block text-[11px] text-gray-400 mb-1">Salary Text</label>
+            <input id="f-salary" oninput="loadJobs()" type="text" placeholder="e.g. EUR, 40000"
+              class="w-full bg-[#101216] border border-brand-border rounded-lg px-2.5 py-1.5 text-white">
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-[11px] text-gray-400 pt-1">
+          <span>Scores (0–100) represent alignment with your verified profile and preferences—never an arbitrary hiring probability.</span>
+          <span id="jobs-count-badge">Loading...</span>
+        </div>
+      </div>
+
+      <!-- Opportunities Table -->
+      <div class="bg-brand-card border border-brand-border rounded-xl overflow-hidden shadow">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-[#14171D] text-gray-400 uppercase tracking-wider border-b border-brand-border text-[11px]">
+              <tr>
+                <th class="py-3 px-4">Score</th>
+                <th class="py-3 px-4">Opportunity & Company</th>
+                <th class="py-3 px-4">Location & Mode</th>
+                <th class="py-3 px-4">Category & Seniority</th>
+                <th class="py-3 px-4">Score Explanation</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="jobs-tbody" class="divide-y divide-brand-border/60">
+              <tr><td colspan="7" class="py-8 text-center text-gray-500">Loading opportunities...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- VIEW 2: PROFILE, ONBOARDING VERIFICATION, CV VAULT & SCHEDULE      -->
+    <!-- ================================================================== -->
+    <section id="view-profile" class="hidden space-y-6">
+
+      <!-- Custom Job Sources & Target Company Career Pages Card -->
+      <div class="bg-brand-card border border-brand-border rounded-xl p-5 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 class="text-sm font-bold text-white">My Target Career Boards & Custom Job Sites</h2>
+            <p class="text-xs text-gray-400">Point your personal AI recruiter at any specific company career page (Greenhouse, Lever, Ashby), regional job board (e.g. Jobs.cz, WTTJ), or custom keyword query.</p>
+          </div>
+          <button onclick="toggleAddSourceModal()" class="px-3 py-1.5 bg-brand-lime text-brand-dark font-bold text-xs rounded-lg shadow">
+            + Add Target Site or Company
+          </button>
+        </div>
+
+        <div id="custom-sources-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+          <div class="p-4 bg-[#101216] border border-brand-border rounded-xl text-gray-500">Loading custom sources...</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Left Column: CV Upload & Private Vault -->
+        <div class="bg-brand-card border border-brand-border rounded-xl p-5 space-y-4">
+          <h2 class="text-sm font-bold text-white">Master CV & Private Document Vault</h2>
+          <p class="text-xs text-gray-400">Upload your PDF, DOCX, Markdown, or TXT CV. Extracted skills and dates remain strictly inside your private vault.</p>
+          <input id="cv-file-input" type="file" accept=".pdf,.docx,.md,.txt" class="block w-full text-xs text-gray-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-brand-lime file:text-brand-dark cursor-pointer">
+          <button onclick="uploadCV()" class="w-full py-2 bg-[#2A2E39] hover:bg-gray-700 text-xs font-semibold text-white rounded-lg transition">
+            Upload & Parse Master CV
+          </button>
+          <div id="cv-upload-result" class="text-xs text-emerald-400 hidden"></div>
+
+          <div class="pt-3 border-t border-brand-border space-y-2">
+            <div class="text-xs font-semibold text-gray-300">My Stored Document Versions</div>
+            <ul id="vault-docs-list" class="space-y-1.5 text-xs text-gray-400 max-h-60 overflow-y-auto"></ul>
+          </div>
+        </div>
+
+        <!-- Middle & Right Column: Preferences, Destination Ranker, Weights & Verification -->
+        <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl p-5 space-y-5">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-bold text-white">Personalized Recruiter Configuration & Verification</h2>
+            <span id="profile-verified-pill" class="text-xs font-bold"></span>
+          </div>
+
+          <div id="verification-checklist-box" class="bg-[#101216] border border-brand-border rounded-xl p-4 space-y-2">
+            <div class="text-xs font-semibold text-amber-300">Onboarding Verification Checklist</div>
+            <ul id="verification-prompts-list" class="list-disc pl-5 text-xs text-gray-300 space-y-1"></ul>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <label class="block text-gray-400 mb-1">Full Name</label>
+              <input id="prof-name" type="text" class="w-full bg-[#101216] border border-brand-border rounded-lg px-3 py-2 text-white">
+            </div>
+            <div>
+              <label class="block text-gray-400 mb-1">Contact Email</label>
+              <input id="prof-email" type="email" class="w-full bg-[#101216] border border-brand-border rounded-lg px-3 py-2 text-white">
+            </div>
+            <div>
+              <label class="block text-gray-400 mb-1">Phone</label>
+              <input id="prof-phone" type="text" class="w-full bg-[#101216] border border-brand-border rounded-lg px-3 py-2 text-white">
+            </div>
+            <div>
+              <label class="block text-gray-400 mb-1">Current Location</label>
+              <input id="prof-location" type="text" class="w-full bg-[#101216] border border-brand-border rounded-lg px-3 py-2 text-white">
+            </div>
+            <div>
+              <label class="block text-gray-400 mb-1">Ranked Destinations (comma-separated, top first)</label>
+              <input id="prof-ranked-dests" type="text" class="w-full bg-[#101216] border border-brand-border rounded-lg px-3 py-2 text-white">
+            </div>
+            <div>
+              <label class="block text-gray-400 mb-1">Excluded Countries (comma-separated)</label>
+              <input id="prof-excluded" type="text" class="w-full bg-[#101216] border border-brand-border rounded-lg px-3 py-2 text-white">
+            </div>
+            <div>
+              <label class="block text-gray-400 mb-1">Target Annual Gross Salary</label>
+              <input id="prof-salary" type="number" class="w-full bg-[#101216] border border-brand-border rounded-lg px-3 py-2 text-white">
+            </div>
+            <div>
+              <label class="block text-gray-400 mb-1">Daily Discovery Time (Timezone-aware)</label>
+              <input id="prof-sched-morning" type="text" placeholder="08:00" class="w-full bg-[#101216] border border-brand-border rounded-lg px-3 py-2 text-white">
+            </div>
+          </div>
+
+          <!-- Advanced JSON Profile Editor for Verifying Exact Experience Dates, Degrees & Weights -->
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Complete Structured Profile JSON (Experience, Verified Flags, Education, Scoring Weights & Schedule)</label>
+            <textarea id="prof-raw-json" rows="10" class="w-full bg-[#101216] border border-brand-border rounded-xl p-3 font-mono text-[11px] text-gray-200"></textarea>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-end gap-3">
+            <button onclick="saveProfile(false)" class="px-4 py-2 bg-[#2A2E39] hover:bg-gray-700 text-xs font-semibold text-white rounded-lg">
+              Save Preferences & Rescore Jobs
+            </button>
+            <button onclick="saveProfile(true)" class="px-4 py-2 bg-brand-lime text-brand-dark hover:bg-[#b5e322] text-xs font-bold rounded-lg shadow">
+              Confirm All Details & Mark My Profile Verified &check;
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- VIEW 3: PRIVACY, PASSWORD & PERMISSION-CONTROLLED ADMIN ASSISTANCE -->
+    <!-- ================================================================== -->
+    <section id="view-privacy" class="hidden space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-brand-card border border-brand-border rounded-xl p-5 space-y-4">
+          <h2 class="text-sm font-bold text-white">Change Account Password</h2>
+          <input id="sec-new-pw" type="password" placeholder="New password (minimum 8 characters)"
+            class="w-full bg-[#101216] border border-brand-border rounded-lg px-3 py-2 text-xs text-white">
+          <button onclick="updatePassword()" class="px-4 py-2 bg-brand-lime text-brand-dark font-bold text-xs rounded-lg">
+            Update Password
+          </button>
+        </div>
+
+        <div class="bg-brand-card border border-brand-border rounded-xl p-5 space-y-4">
+          <h2 class="text-sm font-bold text-white">Permission-Controlled Administrator Assistance</h2>
+          <p class="text-xs text-gray-400">By default, the platform administrator CANNOT view your private CVs, personal notes, or matches. You may optionally grant temporary, audited troubleshooting access and revoke it at any time.</p>
+          <div class="flex items-center space-x-2 text-xs">
+            <select id="grant-scope" class="bg-[#101216] border border-brand-border rounded-lg px-3 py-2 text-white">
+              <option value="profile_assist">Profile & Onboarding Setup Only</option>
+              <option value="matches_view">Job Matches Overview Only</option>
+              <option value="documents_view">CV & Document Review</option>
+            </select>
+            <button onclick="grantAssistance()" class="px-3.5 py-2 bg-[#2A2E39] hover:bg-gray-700 text-white font-semibold rounded-lg">
+              Grant 24h Access
+            </button>
+          </div>
+          <ul id="grants-list" class="space-y-2 text-xs text-gray-300 pt-2"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- VIEW 4: PRIVACY-PRESERVING ADMINISTRATOR CONSOLE                   -->
+    <!-- ================================================================== -->
+    <section id="view-admin" class="hidden space-y-6">
+      <div class="bg-brand-card border border-brand-border rounded-xl p-5 space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-sm font-bold text-amber-300">Platform Administrator Console</h2>
+            <p class="text-xs text-gray-400">Monitors system health, discovery runs, schedules, and aggregate counts without exposing private CVs or correspondence.</p>
+          </div>
+          <button onclick="loadAdminConsole()" class="px-3 py-1.5 bg-[#2A2E39] rounded-lg text-xs text-white">Refresh Telemetry</button>
+        </div>
+
+        <div id="admin-accounts-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3">
+          <div class="bg-[#101216] border border-brand-border rounded-xl p-4">
+            <div class="text-xs font-bold text-white mb-2">Recent Discovery Scans</div>
+            <div id="admin-scans" class="space-y-1.5 text-[11px] text-gray-400 max-h-48 overflow-y-auto font-mono"></div>
+          </div>
+          <div class="bg-[#101216] border border-brand-border rounded-xl p-4">
+            <div class="text-xs font-bold text-white mb-2">Security & Assistance Audit Trail</div>
+            <div id="admin-audits" class="space-y-1.5 text-[11px] text-gray-400 max-h-48 overflow-y-auto font-mono"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Opportunity Inspection & Application Specialist Modal -->
+  <div id="modal-backdrop" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 hidden flex items-center justify-center p-4">
+    <div class="bg-brand-card border border-brand-border w-full max-w-4xl max-h-[92vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden">
+      <div class="px-6 py-4 border-b border-brand-border flex items-center justify-between bg-[#14171D]">
+        <div>
+          <div class="flex items-center space-x-2">
+            <span id="modal-score-badge" class="px-2 py-0.5 rounded text-xs font-bold bg-brand-lime/20 text-brand-lime">--/100</span>
+            <h2 id="modal-title" class="text-base font-bold text-white">Role Title</h2>
+          </div>
+          <p id="modal-subtitle" class="text-xs text-gray-400 mt-0.5"></p>
+        </div>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-white text-lg font-bold px-2">&times;</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-6 space-y-5">
+        <div class="bg-[#101216] border border-brand-border rounded-xl p-4">
+          <div class="text-[11px] font-bold text-gray-400 uppercase mb-1">Personalized Score Explanation</div>
+          <p id="modal-rationale" class="text-xs text-gray-200 font-mono leading-relaxed"></p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-[#101216] border border-brand-border rounded-xl p-4">
+            <div class="text-[11px] font-bold text-emerald-400 uppercase mb-2">Verified Profile Matches</div>
+            <ul id="modal-matches" class="space-y-1 text-xs text-gray-300"></ul>
+          </div>
+          <div class="bg-[#101216] border border-brand-border rounded-xl p-4">
+            <div class="text-[11px] font-bold text-amber-400 uppercase mb-2">Missing Qualifications / Eligibility Checks</div>
+            <ul id="modal-gaps" class="space-y-1 text-xs text-gray-300"></ul>
+          </div>
+        </div>
+
+        <!-- Pipeline Tracking & Notes -->
+        <div class="bg-[#101216] border border-brand-border rounded-xl p-4 space-y-3 text-xs">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-gray-400 mb-1">Application Status</label>
+              <select id="modal-status-select" class="w-full bg-brand-card border border-brand-border rounded-lg px-2.5 py-1.5 text-white">
+                <option value="discovered">Discovered</option>
+                <option value="saved">Saved</option>
+                <option value="awaiting_approval">Awaiting Approval</option>
+                <option value="ready_to_apply">Approved / Ready to Apply</option>
+                <option value="applied">Submitted</option>
+                <option value="interviewing">Interview Invitation</option>
+                <option value="rejected">Rejected</option>
+                <option value="archived">Archived</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-gray-400 mb-1">Follow-up Date</label>
+              <input id="modal-followup" type="date" class="w-full bg-brand-card border border-brand-border rounded-lg px-2.5 py-1.5 text-white">
+            </div>
+            <div>
+              <label class="block text-gray-400 mb-1">Interview Details</label>
+              <input id="modal-interview-info" type="text" placeholder="Date / Recruiter / Stage" class="w-full bg-brand-card border border-brand-border rounded-lg px-2.5 py-1.5 text-white">
+            </div>
+          </div>
+          <div>
+            <label class="block text-gray-400 mb-1">Private Notes (Visible only to you)</label>
+            <input id="modal-notes" type="text" placeholder="Add personal notes..." class="w-full bg-brand-card border border-brand-border rounded-lg px-2.5 py-1.5 text-white">
+          </div>
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+            <button onclick="saveJobTracking()" class="px-3.5 py-1.5 bg-[#2A2E39] hover:bg-gray-700 font-semibold rounded-lg text-white">
+              Save Pipeline Details
+            </button>
+            <div class="flex flex-wrap items-center gap-2">
+              <a id="modal-link-btn" href="#" target="_blank" class="px-3 py-1.5 border border-brand-border rounded-lg text-gray-300 hover:text-white">
+                Open Original Listing &nearr;
+              </a>
+              <button onclick="prepareBrowserDraft()" class="px-3 py-1.5 bg-sky-500/20 border border-sky-500/40 text-sky-300 font-semibold rounded-lg">
+                Prepare Isolated Browser Draft
+              </button>
+              <button id="modal-prep-btn" onclick="generateApplication()" class="px-4 py-1.5 bg-brand-lime text-brand-dark font-bold rounded-lg shadow">
+                Generate Tailored CV & Cover Letter
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Generated Application Specialist Tabs -->
+        <div id="modal-docs-container" class="space-y-3 hidden">
+          <div class="flex items-center justify-between">
+            <div class="flex space-x-4 border-b border-brand-border text-xs font-semibold">
+              <button onclick="switchDocTab('cv')" id="dtab-cv" class="pb-2 border-b-2 border-brand-lime text-white">Tailored CV</button>
+              <button onclick="switchDocTab('cl')" id="dtab-cl" class="pb-2 border-b-2 border-transparent text-gray-400">Cover Letter</button>
+              <button onclick="switchDocTab('qna')" id="dtab-qna" class="pb-2 border-b-2 border-transparent text-gray-400">Application Q&A</button>
+              <button onclick="switchDocTab('interview')" id="dtab-interview" class="pb-2 border-b-2 border-transparent text-gray-400">Interview Prep</button>
+            </div>
+            <span id="modal-cv-version" class="text-[11px] text-gray-400 font-mono"></span>
+          </div>
+          <pre id="modal-doc-viewer" class="bg-[#101216] border border-brand-border rounded-xl p-4 font-mono text-xs text-gray-200 whitespace-pre-wrap max-h-72 overflow-y-auto"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Custom Source Modal -->
+  <div id="modal-add-source" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-brand-card border border-brand-border w-full max-w-lg rounded-2xl p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-brand-border pb-3">
+        <h3 class="text-sm font-bold text-white">Add Target Site or Career Board</h3>
+        <button onclick="toggleAddSourceModal()" class="text-gray-400 hover:text-white text-lg font-bold">&times;</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-gray-400 mb-1">Company or Source Name *</label>
+          <input id="src-name" type="text" placeholder="e.g. Revolut, Jobs.cz Prague, or Sanofi"
+            class="w-full bg-[#101216] border border-brand-border rounded-lg px-3 py-2 text-white">
+        </div>
+        <div>
+          <label class="block text-gray-400 mb-1">Source Type</label>
+          <select id="src-type" class="w-full bg-[#101216] border border-brand-border rounded-lg px-3 py-2 text-white">
+            <option value="company_career_page">Company Career Board (Greenhouse, Lever, Ashby, Direct)</option>
+            <option value="job_board_url">Regional Job Board URL / Webpage</option>
+            <option value="custom_search_query">Targeted Search Query (Keywords + Location)</option>
+            <option value="rss_feed">RSS Job Feed</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-gray-400 mb-1">Target Webpage / Career Board URL (Optional)</label>
+          <input id="src-url" type="url" placeholder="https://boards.greenhouse.io/... or https://jobs.cz/..."
+            class="w-full bg-[#101216] border border-brand-border rounded-lg px-3 py-2 text-white">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-gray-400 mb-1">Target Keywords</label>
+            <input id="src-kws" type="text" placeholder="e.g. support, onboarding, AML"
+              class="w-full bg-[#101216] border border-brand-border rounded-lg px-3 py-2 text-white">
+          </div>
+          <div>
+            <label class="block text-gray-400 mb-1">Location Filter</label>
+            <input id="src-loc" type="text" placeholder="e.g. Prague, Lisbon, Remote"
+              class="w-full bg-[#101216] border border-brand-border rounded-lg px-3 py-2 text-white">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end space-x-2 pt-3 border-t border-brand-border">
+        <button onclick="toggleAddSourceModal()" class="px-4 py-2 bg-[#2A2E39] text-xs font-semibold text-white rounded-lg">Cancel</button>
+        <button onclick="saveCustomSource()" class="px-4 py-2 bg-brand-lime text-brand-dark font-bold text-xs rounded-lg shadow">
+          Save & Add to My Recruiter
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let csrfToken = '';
+    let currentUser = null;
+    let currentProfile = null;
+    let currentMatchId = null;
+    let currentDocBundle = null;
+
+    async function apiFetch(url, opts = {}) {
+      const headers = opts.headers || {};
+      if (csrfToken && opts.method && opts.method !== 'GET') {
+        headers['X-CSRF-Token'] = csrfToken;
+      }
+      opts.headers = headers;
+      const res = await fetch(url, opts);
+      if (res.status === 401) {
+        window.location.href = '/login';
+        throw new Error('Unauthorized');
+      }
+      return res;
+    }
+
+    async function initPortal() {
+      const meRes = await apiFetch('/api/auth/me');
+      const meData = await meRes.json();
+      csrfToken = meData.csrf_token;
+      currentUser = meData.user;
+
+      document.getElementById('user-avatar').innerText = currentUser.full_name.slice(0, 2).toUpperCase();
+      document.getElementById('header-user-title').innerText = `${currentUser.full_name} — AI Recruiter`;
+      document.getElementById('header-user-sub').innerText = `Account: ${currentUser.slug} • Strictly isolated workspace`;
+
+      const vBadge = document.getElementById('header-verify-badge');
+      if (currentUser.profile_verified) {
+        vBadge.innerText = 'Verified';
+        vBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-300';
+        document.getElementById('verify-banner').classList.add('hidden');
+      } else {
+        vBadge.innerText = 'Verification Pending';
+        vBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-500/20 text-amber-300';
+        document.getElementById('verify-banner').classList.remove('hidden');
+      }
+
+      if (currentUser.is_admin) {
+        document.getElementById('nav-admin').classList.remove('hidden');
+      }
+
+      await loadStats();
+      await loadJobs();
+    }
+
+    function switchMainView(view) {
+      ['dashboard', 'profile', 'privacy', 'admin'].forEach(v => {
+        document.getElementById(`view-${v}`).classList.add('hidden');
+        const navBtn = document.getElementById(`nav-${v}`);
+        if (navBtn) navBtn.classList.remove('bg-brand-card', 'text-brand-lime');
+      });
+      document.getElementById(`view-${view}`).classList.remove('hidden');
+      document.getElementById(`nav-${view}`).classList.add('bg-brand-card', 'text-brand-lime');
+
+      if (view === 'profile') { loadProfileEditor(); loadVaultDocs(); loadCustomSources(); }
+      if (view === 'privacy') { loadGrants(); }
+      if (view === 'admin') { loadAdminConsole(); }
+    }
+
+    async function loadStats() {
+      const res = await apiFetch('/api/stats');
+      const d = await res.json();
+      document.getElementById('stat-new').innerText = d.status_discovered || 0;
+      document.getElementById('stat-high').innerText = d.high_match_count || 0;
+      document.getElementById('stat-saved').innerText = d.status_saved || 0;
+      document.getElementById('stat-awaiting').innerText = (d.status_awaiting_approval || 0) + (d.status_ready_to_apply || 0);
+      document.getElementById('stat-applied').innerText = d.status_applied || 0;
+      document.getElementById('stat-interviews').innerText = d.status_interviewing || 0;
+      document.getElementById('stat-followup').innerText = d.follow_ups_due || 0;
+      document.getElementById('stat-rejected').innerText = d.status_rejected || 0;
+      document.getElementById('btn-scan').innerText = d.scan_running ? 'Scanning Feeds...' : 'Run My Discovery Sweep';
+      document.getElementById('btn-scan').disabled = !!d.scan_running;
+    }
+
+    async function loadJobs() {
+      const params = new URLSearchParams({
+        min_score: document.getElementById('f-score').value,
+        status: document.getElementById('f-status').value,
+        remote_type: document.getElementById('f-remote').value,
+        country: document.getElementById('f-country').value,
+        category: document.getElementById('f-category').value,
+        seniority: document.getElementById('f-seniority').value,
+        location: document.getElementById('f-location').value.trim(),
+        company: document.getElementById('f-company').value.trim(),
+        salary: document.getElementById('f-salary').value.trim(),
+        limit: 100
+      });
+      const res = await apiFetch(`/api/jobs?${params.toString()}`);
+      const d = await res.json();
+      document.getElementById('jobs-count-badge').innerText = `${d.count} matching vacancies`;
+      const tbody = document.getElementById('jobs-tbody');
+      if (!d.jobs || d.jobs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-gray-500">No vacancies match current filters. Click "Run My Discovery Sweep" or lower Min Score.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = d.jobs.map(j => {
+        const cls = j.match_score >= 80 ? 'text-brand-lime bg-brand-lime/10 border-brand-lime/30'
+          : (j.match_score >= 65 ? 'text-sky-300 bg-sky-500/10 border-sky-500/30' : 'text-amber-300 bg-amber-500/10 border-amber-500/30');
+        return `
+          <tr class="hover:bg-[#1E222B] cursor-pointer transition" onclick="inspectJob(${j.match_id})">
+            <td class="py-3 px-4 whitespace-nowrap"><span class="px-2 py-1 rounded border font-mono font-bold ${cls}">${j.match_score}/100</span></td>
+            <td class="py-3 px-4">
+              <div class="font-semibold text-white">${esc(j.title)}</div>
+              <div class="text-[11px] text-gray-400">${esc(j.company)} &bull; ${esc(j.source)}</div>
+            </td>
+            <td class="py-3 px-4">
+              <div class="text-gray-200">${esc(j.location)}</div>
+              <div class="text-[11px] text-sky-400">${esc(j.remote_type)}</div>
+            </td>
+            <td class="py-3 px-4">
+              <div class="text-gray-300">${esc(j.category || 'General')}</div>
+              <div class="text-[11px] text-gray-500">${esc(j.seniority || '')}</div>
+            </td>
+            <td class="py-3 px-4 max-w-xs truncate text-gray-400" title="${esc(j.score_rationale)}">${esc(j.score_rationale)}</td>
+            <td class="py-3 px-4 whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-[#2A2E39] text-[11px] uppercase">${esc(j.status)}</span></td>
+            <td class="py-3 px-4 text-right whitespace-nowrap" onclick="event.stopPropagation()">
+              <button onclick="inspectJob(${j.match_id})" class="px-2.5 py-1 bg-[#2A2E39] hover:bg-gray-700 rounded text-white mr-1">Inspect</button>
+              <a href="${esc(j.job_url)}" target="_blank" class="text-brand-lime hover:underline">Open &nearr;</a>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function inspectJob(matchId) {
+      currentMatchId = matchId;
+      const res = await apiFetch(`/api/jobs/${matchId}`);
+      const d = await res.json();
+      const j = d.job;
+      document.getElementById('modal-score-badge').innerText = `${j.match_score}/100`;
+      document.getElementById('modal-title').innerText = j.title;
+      document.getElementById('modal-subtitle').innerText = `${j.company} • ${j.location} (${j.remote_type}) • ${j.contract_type || ''}`;
+      document.getElementById('modal-rationale').innerText = j.score_rationale;
+      document.getElementById('modal-status-select').value = j.status;
+      document.getElementById('modal-followup').value = j.follow_up_date || '';
+      document.getElementById('modal-interview-info').value = j.interview_info || '';
+      document.getElementById('modal-notes').value = j.private_notes || '';
+      document.getElementById('modal-link-btn').href = j.job_url;
+
+      document.getElementById('modal-matches').innerHTML = (d.gap_analysis.direct_matches || []).map(m => `<li>&check; ${esc(m)}</li>`).join('') || '<li>None flagged</li>';
+      document.getElementById('modal-gaps').innerHTML = (d.gap_analysis.identified_gaps || []).map(g => `<li>&bull; ${esc(g)}</li>`).join('') || '<li class="text-emerald-400">No blocking gaps flagged.</li>';
+
+      currentDocBundle = {
+        cv: d.prepared_documents.cv_content,
+        cl: d.prepared_documents.cover_letter_content,
+        qna: d.prepared_documents.qna_content,
+        interview: d.interview_prep,
+        cv_version: d.prepared_documents.cv_version_label
+      };
+      if (d.prepared_documents.has_package) {
+        document.getElementById('modal-docs-container').classList.remove('hidden');
+        document.getElementById('modal-cv-version').innerText = currentDocBundle.cv_version ? `CV Version: ${currentDocBundle.cv_version}` : '';
+        switchDocTab('cv');
+      } else {
+        document.getElementById('modal-docs-container').classList.add('hidden');
+      }
+      document.getElementById('modal-backdrop').classList.remove('hidden');
+    }
+
+    async function generateApplication() {
+      const btn = document.getElementById('modal-prep-btn');
+      btn.disabled = true;
+      btn.innerText = 'Preparing...';
+      try {
+        const res = await apiFetch(`/api/jobs/${currentMatchId}/prepare`, { method: 'POST' });
+        const d = await res.json();
+        if (!res.ok) {
+          alert(d.error || 'Could not generate application');
+          if (d.verification_required) { closeModal(); switchMainView('profile'); }
+          return;
+        }
+        currentDocBundle = {
+          cv: d.cv_content,
+          cl: d.cover_letter_content,
+          qna: d.qna_content,
+          interview: d.interview_prep,
+          cv_version: d.cv_version_label
+        };
+        document.getElementById('modal-cv-version').innerText = `CV Version: ${d.cv_version_label}`;
+        document.getElementById('modal-docs-container').classList.remove('hidden');
+        document.getElementById('modal-status-select').value = 'awaiting_approval';
+        switchDocTab('cv');
+        await loadStats();
+        await loadJobs();
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Generate Tailored CV & Cover Letter';
+      }
+    }
+
+    async function prepareBrowserDraft() {
+      const res = await apiFetch(`/api/jobs/${currentMatchId}/automation-draft`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inspect_live_url: false })
+      });
+      const d = await res.json();
+      if (!res.ok) { alert(d.error || 'Failed'); return; }
+      document.getElementById('modal-docs-container').classList.remove('hidden');
+      document.getElementById('modal-doc-viewer').innerText = JSON.stringify(d.draft, null, 2);
+    }
+
+    function switchDocTab(t) {
+      if (!currentDocBundle) return;
+      ['cv', 'cl', 'qna', 'interview'].forEach(k => {
+        document.getElementById(`dtab-${k}`).className = k === t
+          ? 'pb-2 border-b-2 border-brand-lime text-white'
+          : 'pb-2 border-b-2 border-transparent text-gray-400';
+      });
+      const viewer = document.getElementById('modal-doc-viewer');
+      if (t === 'cv') viewer.innerText = currentDocBundle.cv || 'Generate package first.';
+      if (t === 'cl') viewer.innerText = currentDocBundle.cl || 'Generate package first.';
+      if (t === 'qna') viewer.innerText = JSON.stringify(currentDocBundle.qna || {}, null, 2);
+      if (t === 'interview') viewer.innerText = JSON.stringify(currentDocBundle.interview || [], null, 2);
+    }
+
+    async function saveJobTracking() {
+      const res = await apiFetch(`/api/jobs/${currentMatchId}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: document.getElementById('modal-status-select').value,
+          follow_up_date: document.getElementById('modal-followup').value,
+          interview_info: document.getElementById('modal-interview-info').value,
+          notes: document.getElementById('modal-notes').value
+        })
+      });
+      if (res.ok) {
+        await loadStats();
+        await loadJobs();
+        alert('Saved to your private pipeline!');
+      }
+    }
+
+    async function loadProfileEditor() {
+      const res = await apiFetch('/api/profile');
+      const d = await res.json();
+      currentProfile = d.profile;
+      const p = currentProfile.personal || {};
+      const prefs = currentProfile.preferences || {};
+      document.getElementById('prof-name').value = p.full_name || '';
+      document.getElementById('prof-email').value = p.email || '';
+      document.getElementById('prof-phone').value = p.phone || '';
+      document.getElementById('prof-location').value = p.current_location || '';
+      document.getElementById('prof-ranked-dests').value = (prefs.ranked_destinations || []).join(', ');
+      document.getElementById('prof-excluded').value = (prefs.excluded_countries || []).join(', ');
+      document.getElementById('prof-salary').value = (prefs.salary_expectation || {}).target_annual_gross || '';
+      document.getElementById('prof-sched-morning').value = ((currentProfile.schedule || {}).jobs || {}).morning_discovery || '08:00';
+      document.getElementById('prof-raw-json').value = JSON.stringify(currentProfile, null, 2);
+
+      const prompts = currentProfile.verification_prompts || [];
+      document.getElementById('verification-prompts-list').innerHTML = prompts.length
+        ? prompts.map(x => `<li>${esc(x)}</li>`).join('')
+        : '<li class="text-emerald-400">All onboarding items verified!</li>';
+      document.getElementById('profile-verified-pill').innerText = d.user.profile_verified ? 'Status: Verified' : 'Status: Pending Verification';
+    }
+
+    async function saveProfile(markVerified) {
+      let parsed;
+      try {
+        parsed = JSON.parse(document.getElementById('prof-raw-json').value);
+      } catch (e) {
+        alert('Invalid JSON syntax in profile editor.');
+        return;
+      }
+      parsed.personal = parsed.personal || {};
+      parsed.personal.full_name = document.getElementById('prof-name').value.trim();
+      parsed.personal.email = document.getElementById('prof-email').value.trim();
+      parsed.personal.phone = document.getElementById('prof-phone').value.trim();
+      parsed.personal.current_location = document.getElementById('prof-location').value.trim();
+
+      parsed.preferences = parsed.preferences || {};
+      parsed.preferences.ranked_destinations = document.getElementById('prof-ranked-dests').value.split(',').map(s => s.trim()).filter(Boolean);
+      parsed.preferences.excluded_countries = document.getElementById('prof-excluded').value.split(',').map(s => s.trim()).filter(Boolean);
+      parsed.preferences.salary_expectation = parsed.preferences.salary_expectation || {};
+      parsed.preferences.salary_expectation.target_annual_gross = Number(document.getElementById('prof-salary').value) || 0;
+
+      parsed.schedule = parsed.schedule || { enabled: true, jobs: {} };
+      parsed.schedule.jobs = parsed.schedule.jobs || {};
+      parsed.schedule.jobs.morning_discovery = document.getElementById('prof-sched-morning').value.trim() || '08:00';
+
+      if (markVerified) {
+        (parsed.experience || []).forEach(e => { e.verified = true; e.dates_verified = true; });
+        (parsed.education || []).forEach(ed => { ed.verified = true; });
+      }
+
+      const res = await apiFetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profile: parsed, mark_verified: markVerified ? true : undefined })
+      });
+      const d = await res.json();
+      if (res.ok) {
+        alert(markVerified ? 'Profile verified and vacancies rescored!' : 'Preferences saved and vacancies rescored!');
+        await initPortal();
+        await loadProfileEditor();
+      } else {
+        alert(d.error || 'Failed to save profile');
+      }
+    }
+
+    async function uploadCV() {
+      const inp = document.getElementById('cv-file-input');
+      if (!inp.files.length) { alert('Choose a CV file first.'); return; }
+      const fd = new FormData();
+      fd.append('file', inp.files[0]);
+      const res = await apiFetch('/api/cv/upload', { method: 'POST', body: fd });
+      const d = await res.json();
+      const box = document.getElementById('cv-upload-result');
+      if (res.ok) {
+        box.innerText = `Stored securely (${d.version_label}). Detected skills: ${(d.insights.detected_skills || []).join(', ') || 'None'}`;
+        box.classList.remove('hidden');
+        await loadVaultDocs();
+      } else {
+        alert(d.error || 'Upload failed');
+      }
+    }
+
+    async function loadVaultDocs() {
+      const res = await apiFetch('/api/documents');
+      const d = await res.json();
+      const ul = document.getElementById('vault-docs-list');
+      ul.innerHTML = (d.documents || []).map(doc =>
+        `<li class="flex justify-between items-center bg-[#101216] px-3 py-1.5 rounded border border-brand-border">
+          <span>${esc(doc.version_label)}</span>
+          <span class="text-[10px] uppercase text-gray-500">${esc(doc.doc_kind)}</span>
+        </li>`
+      ).join('') || '<li>No documents stored yet.</li>';
+    }
+
+    function toggleAddSourceModal() {
+      document.getElementById('modal-add-source').classList.toggle('hidden');
+    }
+
+    async function loadCustomSources() {
+      const res = await apiFetch('/api/custom-sources');
+      const d = await res.json();
+      const box = document.getElementById('custom-sources-list');
+      if (!d.sources || d.sources.length === 0) {
+        box.innerHTML = `<div class="p-4 bg-[#101216] border border-brand-border rounded-xl text-gray-400 col-span-3 text-center">
+          No custom sources added yet. Click <b>"+ Add Target Site or Company"</b> to tell your AI recruiter to track specific company career boards (like Revolut, Wise, Jobs.cz, etc.).
+        </div>`;
+        return;
+      }
+      box.innerHTML = d.sources.map(s => `
+        <div class="bg-[#101216] border border-brand-border rounded-xl p-3.5 space-y-2 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-white">${esc(s.source_name)}</span>
+              <span class="px-1.5 py-0.5 rounded bg-[#2A2E39] text-[10px] text-gray-400">${esc(s.source_type.replace(/_/g, ' '))}</span>
+            </div>
+            ${s.target_url ? `<a href="${esc(s.target_url)}" target="_blank" class="text-xs text-sky-400 hover:underline block truncate mt-1">${esc(s.target_url)}</a>` : ''}
+            <div class="text-[11px] text-gray-400 mt-1">
+              ${s.query_keywords ? `Keywords: <span class="text-gray-200">${esc(s.query_keywords)}</span>` : ''}
+              ${s.target_location ? ` &bull; Loc: <span class="text-gray-200">${esc(s.target_location)}</span>` : ''}
+            </div>
+            <div class="text-[10px] text-gray-500 mt-1">Last checked: ${s.last_scanned_at ? esc(s.last_scanned_at.slice(0, 16).replace('T', ' ')) : 'Never'}</div>
+          </div>
+          <div class="flex items-center justify-between pt-2 border-t border-brand-border/60">
+            <button onclick="scanCustomSourceNow(${s.id})" class="px-2.5 py-1 bg-brand-lime/10 border border-brand-lime/30 text-brand-lime hover:bg-brand-lime/20 rounded font-semibold text-[11px] transition">
+              Scan This Site Now
+            </button>
+            <button onclick="deleteCustomSource(${s.id})" class="text-red-400 hover:text-red-300 text-[11px]">
+              Remove
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function saveCustomSource() {
+      const name = document.getElementById('src-name').value.trim();
+      if (!name) { alert('Please enter a company or source name.'); return; }
+      const res = await apiFetch('/api/custom-sources', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          source_name: name,
+          source_type: document.getElementById('src-type').value,
+          target_url: document.getElementById('src-url').value.trim(),
+          query_keywords: document.getElementById('src-kws').value.trim(),
+          target_location: document.getElementById('src-loc').value.trim()
+        })
+      });
+      const d = await res.json();
+      if (res.ok) {
+        toggleAddSourceModal();
+        document.getElementById('src-name').value = '';
+        document.getElementById('src-url').value = '';
+        document.getElementById('src-kws').value = '';
+        document.getElementById('src-loc').value = '';
+        await loadCustomSources();
+        alert('Custom source added! Your recruiter will now search it during scheduled discovery or when you click "Scan This Site Now".');
+      } else {
+        alert(d.error || 'Failed to add source');
+      }
+    }
+
+    async function deleteCustomSource(id) {
+      if (!confirm('Remove this custom source?')) return;
+      await apiFetch(`/api/custom-sources/${id}`, { method: 'DELETE' });
+      await loadCustomSources();
+    }
+
+    async function scanCustomSourceNow(id) {
+      const res = await apiFetch(`/api/custom-sources/${id}/scan-now`, { method: 'POST' });
+      const d = await res.json();
+      if (res.ok) {
+        alert(`Checked! Found ${d.jobs_found} positions from this source and updated your match scores.`);
+        await loadCustomSources();
+        await loadStats();
+        await loadJobs();
+      } else {
+        alert(d.error || 'Scan failed');
+      }
+    }
+
+    async function updatePassword() {
+      const pw = document.getElementById('sec-new-pw').value;
+      const res = await apiFetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ new_password: pw })
+      });
+      const d = await res.json();
+      alert(res.ok ? 'Password updated!' : (d.error || 'Error'));
+    }
+
+    async function loadGrants() {
+      const res = await apiFetch('/api/privacy/grants');
+      const d = await res.json();
+      document.getElementById('grants-list').innerHTML = (d.grants || []).map(g =>
+        `<li class="flex justify-between items-center bg-[#101216] p-2.5 rounded border border-brand-border">
+          <span>Scope: <b>${esc(g.scope)}</b> &bull; ${g.revoked_at ? 'Revoked' : 'Expires ' + esc(g.expires_at.slice(0, 16))}</span>
+          ${g.revoked_at ? '' : `<button onclick="revokeGrant(${g.id})" class="text-red-400 hover:underline">Revoke</button>`}
+        </li>`
+      ).join('') || '<li class="text-gray-500">No active administrator assistance permissions granted.</li>';
+    }
+
+    async function grantAssistance() {
+      const scope = document.getElementById('grant-scope').value;
+      await apiFetch('/api/privacy/grants', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scope, hours_valid: 24 })
+      });
+      await loadGrants();
+    }
+
+    async function revokeGrant(id) {
+      await apiFetch(`/api/privacy/grants/${id}`, { method: 'DELETE' });
+      await loadGrants();
+    }
+
+    async function loadAdminConsole() {
+      const res = await apiFetch('/api/admin/overview');
+      if (!res.ok) return;
+      const d = await res.json();
+      document.getElementById('admin-accounts-grid').innerHTML = (d.accounts || []).map(a => `
+        <div class="bg-[#101216] border border-brand-border rounded-xl p-4 space-y-1.5 text-xs">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-white">${esc(a.full_name)} (${esc(a.slug)})</span>
+            <span class="px-2 py-0.5 rounded text-[10px] ${a.profile_verified ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}">${a.profile_verified ? 'Verified' : 'Pending Verify'}</span>
+          </div>
+          <div class="text-gray-400">Matches: <b>${a.total_matches}</b> &bull; Strong (75+): <b>${a.strong_matches}</b> &bull; Submitted: <b>${a.submitted_count}</b></div>
+          <div class="text-[11px] text-gray-500">Assistance Grants Active: ${a.active_assistance_grants.length ? a.active_assistance_grants.map(g => g.scope).join(', ') : 'None (Private Vault Locked)'}</div>
+        </div>
+      `).join('');
+
+      document.getElementById('admin-scans').innerHTML = (d.recent_scans || []).map(s =>
+        `<div>[${esc((s.scanned_at || '').slice(0, 19))}] ${esc(s.source)}: ${s.found_count} found (${esc(s.status)})</div>`
+      ).join('') || 'No scan logs.';
+
+      document.getElementById('admin-audits').innerHTML = (d.recent_audits || []).map(a =>
+        `<div>[${esc((a.created_at || '').slice(0, 19))}] actor=${a.actor_user_id} target=${a.target_user_id} ${esc(a.action)}</div>`
+      ).join('') || 'No audit events.';
+    }
+
+    async function triggerScan() {
+      const res = await apiFetch('/api/scan', { method: 'POST' });
+      if (res.ok) {
+        await loadStats();
+        const timer = setInterval(async () => {
+          const sr = await apiFetch('/api/stats');
+          const sd = await sr.json();
+          if (!sd.scan_running) {
+            clearInterval(timer);
+            await loadStats();
+            await loadJobs();
+          }
+        }, 2500);
+      }
+    }
+
+    async function logout() {
+      await apiFetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/login';
+    }
+
+    function closeModal() {
+      document.getElementById('modal-backdrop').classList.add('hidden');
+    }
+
+    function esc(s) {
+      if (s === null || s === undefined) return '';
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    window.onload = initPortal;
+  </script>
+</body>
+</html>

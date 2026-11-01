@@ -1,0 +1,9 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Strictly lock private CVs, cover letters, and uploaded files to the authenticated owner UID
+    match /user_{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.token.platform_user_id == userId;
+    }
+  }
+}

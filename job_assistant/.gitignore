@@ -1,0 +1,13 @@
+# Never commit local databases, private user vaults, browser cookies, or bootstrap secrets
+data/jobs.db
+data/jobs.db-journal
+data/jobs.db-wal
+data/bootstrap_credentials.json
+data/.flask_secret
+data/vault/
+data/browser_profiles/
+data/backups/
+_backup_*/
+__pycache__/
+*.pyc
+.env
