@@ -209,50 +209,48 @@ def _score_for_justin(job_data: Dict[str, Any], profile: Dict[str, Any], traps: 
     # A. Experience & Skills (out of 35)
     exp_pts = 5.0
     matched = []
-    if is_practical and in_france and practical_enabled:
+
+    sap_hit = any(k in combined for k in ["sap", "va32", "zbl", "zdr", "order management", "order to cash", "order desk", "gestion des commandes", "adv"])
+    export_hit = any(k in combined for k in ["export", "customs", "douane", "awb", "airway bill", "incoterms", "ex-1", "certificate of origin", "cold chain", "logistics", "supply chain", "freight"])
+    cs_hit = any(k in combined for k in ["customer service", "customer support", "customer experience", "customer operations", "customer success", "client support", "customer care", "service client"])
+    lead_hit = any(k in combined for k in ["team lead", "team manager", "manager", "shift lead", "escalation", "coaching"])
+    sports_trading_hit = any(k in combined for k in [
+        "sports trading", "sports trader", "odds trader", "sportsbook", "in-play trading",
+        "sports betting", "betting operations", "trading analyst", "odds compiler", "sports pricing",
+        "football trader", "golf trader", "racing trader"
+    ])
+    gaming_pay_hit = any(k in combined for k in ["igaming", "payment", "billing"])
+    admin_hit = any(k in combined for k in ["administrative", "back office", "office coordinator", "order administrator"])
+
+    if sports_trading_hit:
         exp_pts = 35.0
-        matched.append("France Immediate Stability Track (Local accessible employment)")
-    else:
-        sap_hit = any(k in combined for k in ["sap", "va32", "zbl", "zdr", "order management", "order to cash", "order desk", "gestion des commandes", "adv"])
-        export_hit = any(k in combined for k in ["export", "customs", "douane", "awb", "airway bill", "incoterms", "ex-1", "certificate of origin", "cold chain", "logistics", "supply chain", "freight"])
-        cs_hit = any(k in combined for k in ["customer service", "customer support", "customer experience", "customer operations", "customer success", "client support", "customer care", "service client"])
-        lead_hit = any(k in combined for k in ["team lead", "team manager", "manager", "shift lead", "escalation", "coaching"])
-        sports_trading_hit = any(k in combined for k in [
-            "sports trading", "sports trader", "odds trader", "sportsbook", "in-play trading",
-            "sports betting", "betting operations", "trading analyst", "odds compiler", "sports pricing"
-        ])
-        gaming_pay_hit = any(k in combined for k in ["igaming", "payment", "billing"])
-        admin_hit = any(k in combined for k in ["administrative", "back office", "office coordinator", "order administrator"])
+        matched.append("Top Priority Match: Direct Sports Trading & Sportsbook Operations")
+    elif sap_hit and export_hit:
+        exp_pts = 35.0
+        matched.append("Direct SAP + EMEA Export/Logistics match (QuidelOrtho)")
+    elif export_hit:
+        exp_pts = max(exp_pts, 31.0)
+        matched.append("Export, Logistics & Supply Chain match")
+    elif sap_hit:
+        exp_pts = max(exp_pts, 29.0)
+        matched.append("SAP & Order Management match")
 
-        if sports_trading_hit:
-            exp_pts = 35.0
-            matched.append("Top Priority Match: Direct Sports Trading & Sportsbook Operations (Besedo)")
-        elif sap_hit and export_hit:
-            exp_pts = 35.0
-            matched.append("Direct SAP + EMEA Export/Logistics match (QuidelOrtho)")
-        elif export_hit:
-            exp_pts = max(exp_pts, 31.0)
-            matched.append("Export, Logistics & Supply Chain match")
-        elif sap_hit:
-            exp_pts = max(exp_pts, 29.0)
-            matched.append("SAP & Order Management match")
+    if cs_hit and lead_hit:
+        exp_pts = max(exp_pts, 33.0)
+        matched.append("Customer Operations & Team Leadership (~15 staff at Besedo)")
+    elif cs_hit:
+        exp_pts = max(exp_pts, 28.0)
+        matched.append("Customer Support / CX / Operations match")
 
-        if cs_hit and lead_hit:
-            exp_pts = max(exp_pts, 33.0)
-            matched.append("Customer Operations & Team Leadership (~15 staff at Besedo)")
-        elif cs_hit:
-            exp_pts = max(exp_pts, 28.0)
-            matched.append("Customer Support / CX / Operations match")
-
-        if gaming_pay_hit and not sports_trading_hit:
-            exp_pts = max(exp_pts, 28.0)
-            matched.append("iGaming / Payments operations")
-        if admin_hit:
-            exp_pts = max(exp_pts, 22.0)
-            matched.append("English Administrative / Back-office operations")
-        if is_practical and exp_pts < 22.0:
-            exp_pts = 22.0
-            matched.append("Practical warehouse/logistics operations")
+    if gaming_pay_hit and not sports_trading_hit:
+        exp_pts = max(exp_pts, 28.0)
+        matched.append("iGaming / Payments operations")
+    if admin_hit:
+        exp_pts = max(exp_pts, 22.0)
+        matched.append("English Administrative / Back-office operations")
+    if is_practical and in_france and practical_enabled:
+        exp_pts = max(exp_pts, 24.0)
+        matched.append("France Local Practical Stability Track")
 
     reasons.append(
         f"Experience ({int(exp_pts)}/35): {', '.join(matched) if matched else 'Low direct overlap with core experience'}."
@@ -265,7 +263,28 @@ def _score_for_justin(job_data: Dict[str, Any], profile: Dict[str, Any], traps: 
         allowed_languages=["English", "French"]
     )
 
-    english_ok = any(k in combined for k in ["english", "anglais"])
+    in_english_region = any(k in location for k in [
+        "ireland", "irlande", "united kingdom", "uk", "london", "dublin", "gibraltar", "malta", "united states", "usa"
+    ])
+    english_ok = any(k in combined for k in ["english", "anglais"]) or in_english_region or sports_trading_hit
+    french_native_strict = any(k in combined for k in [
+        "français langue maternelle", "french native", "native french"
+    ])
+    french_workplace = any(k in combined for k in [
+        "français", "french", "bilingue", "courant", "b2", "b1", "french speaker"
+    ])
+
+    if barrier:
+        lang_pts = 0.0
+        penalty += 65.0
+        flags["language_barrier"] = True
+        reasons.append(f"Language Barrier (-65): Role requires {barrier['language']} ({barrier['reason']}), outside verified languages (English C2, French B2).")
+    elif is_practical and in_france and practical_enabled:
+        lang_pts = 25.0
+        reasons.append("Language (25/25): Practical local role viable with conversational B1-B2 French.")
+    elif english_ok and not french_native_strict:
+        lang_pts = 25.0
+        reasons.append("Language (25/25): English-accessible role compatible with verified profile.")
     french_native_strict = any(k in combined for k in [
         "français langue maternelle", "french native", "native french"
     ])
