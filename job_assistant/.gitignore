@@ -1,5 +1,4 @@
-# Never commit local databases, private user vaults, browser cookies, or bootstrap secrets
-data/jobs.db
+# Never commit private user vaults, browser cookies, or bootstrap secrets
 data/jobs.db-journal
 data/jobs.db-wal
 data/bootstrap_credentials.json

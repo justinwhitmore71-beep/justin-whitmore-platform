@@ -149,7 +149,7 @@ def run_discovery_for_user(
     targeted scrapers and scores for that user. If None, runs full platform discovery for all 3 users!
     """
     init_db(db_path=db_path)
-    slugs = [target_user_slug.lower()] if target_user_slug else ["justin", "isil", "lindsey"]
+    slugs = [target_user_slug.lower()] if target_user_slug else ["justin", "isil", "lindsey", "laurence"]
     collected: List[Dict[str, Any]] = []
 
     # 1. Shared Remote & Direct Company Career Boards (Benefits all 3 users)

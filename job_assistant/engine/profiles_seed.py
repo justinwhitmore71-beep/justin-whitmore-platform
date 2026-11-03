@@ -146,15 +146,13 @@ def get_seed_users() -> List[Dict[str, Any]]:
                 "verification_prompts": [],
                 "preferences": {
                     "target_roles": [
-                        "Customer Experience",
-                        "Customer Support",
-                        "Customer Operations",
-                        "Order Management",
-                        "Export Operations",
-                        "Logistics",
-                        "Supply Chain",
-                        "English-speaking Administrative",
-                        "Remote International Operations"
+                        "Sports Trading / Sportsbook Specialist",
+                        "Sports Trader (Pre-match & In-play Operations)",
+                        "Sportsbook Risk & Odds Trading Analyst",
+                        "iGaming Operations & Trading Team Manager",
+                        "Order Management & EMEA Export Logistics",
+                        "Customer Operations & Team Leadership",
+                        "English-speaking Administrative & Remote Operations"
                     ],
                     "ranked_destinations": ["France (Orléans & Nationwide)", "Portugal (Lisbon)", "Remote (Accessible from France)", "Spain", "Netherlands", "Ireland", "Germany"],
                     "excluded_countries": ["Malta"],
@@ -515,6 +513,77 @@ def get_seed_users() -> List[Dict[str, Any]]:
                 "schedule": {
                     **DEFAULT_SCHEDULE_CONFIG,
                     "timezone": "Europe/Malta"
+                }
+            }
+        },
+
+        # =====================================================================
+        # USER 4: LAURENCE WHITMORE (Mom — Profile & Preferences Onboarding)
+        # =====================================================================
+        {
+            "slug": "laurence",
+            "full_name": "Laurence Whitmore",
+            "email": "laurence@pending-verification.local",
+            "is_admin": False,
+            "account_status": "pending_verification",
+            "profile_verified": False,
+            "profile": {
+                "personal": {
+                    "full_name": "Laurence Whitmore",
+                    "email": "",
+                    "phone": "",
+                    "current_location": "France (or Remote)",
+                    "current_country": "France",
+                    "open_to_relocation_europe": False,
+                    "car_available": True
+                },
+                "citizenships": ["French"],
+                "work_authorization": {
+                    "eu_eea_free_movement": True,
+                    "france_authorized": True,
+                    "requires_eu_sponsorship": False,
+                    "summary": "Full unrestricted right to live and work in France and throughout the European Union without visa sponsorship."
+                },
+                "languages": [
+                    {"language": "French", "level": "Native / Fluent", "can_work_professionally": True, "verified": True},
+                    {"language": "English", "level": "Professional / Working", "can_work_professionally": True, "verified": True}
+                ],
+                "experience": [],
+                "education": [],
+                "skills": [],
+                "verification_prompts": [
+                    "Specify what industries or roles you are searching for (e.g., Administration, Client Services, Operations, Retail, Healthcare, Education, Remote).",
+                    "Confirm your current location and commuting radius (e.g., Orléans area, Loiret, or Remote).",
+                    "Upload your CV to automatically extract your previous positions, qualifications, and skills."
+                ],
+                "preferences": {
+                    "target_roles": [
+                        "General Administration / Office Coordination",
+                        "Customer Relations / Client Services",
+                        "Operations & Team Coordination",
+                        "Remote Customer Support",
+                        "Bilingual French / English Roles"
+                    ],
+                    "ranked_destinations": ["France (Local & Nationwide)", "Remote (France / Europe)"],
+                    "excluded_countries": [],
+                    "remote_preference": "open_to_remote_or_local",
+                    "relocation_open": False,
+                    "salary_expectation": {
+                        "currency": "EUR",
+                        "min_annual_gross": 24000,
+                        "target_annual_gross": 35000,
+                        "flexible_for_stability": True
+                    }
+                },
+                "scoring_weights": {
+                    "experience_skills": 30,
+                    "language_compatibility": 30,
+                    "location_remote_transit": 25,
+                    "work_auth_and_contract": 15
+                },
+                "schedule": {
+                    **DEFAULT_SCHEDULE_CONFIG,
+                    "timezone": "Europe/Paris"
                 }
             }
         }

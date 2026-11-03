@@ -102,6 +102,14 @@ def run_targeted_linkedin_searches() -> List[Dict[str, Any]]:
         ("Logistics", "Orléans, Centre-Val de Loire, France"),
         ("Export", "Orléans, Centre-Val de Loire, France"),
         
+        # Sports Trading / Sportsbook (Justin's Top Priority)
+        ("Sports Trader", "European Union"),
+        ("Sports Trading", "Remote"),
+        ("Sportsbook Trader", "Europe"),
+        ("Odds Trader", "Remote"),
+        ("Sports Trading", "Lisbon, Portugal"),
+        ("Sports Trading", "France"),
+
         # Portugal (Lisbon, Porto)
         ("Customer Support English", "Lisbon, Portugal"),
         ("Customer Operations English", "Lisbon, Portugal"),

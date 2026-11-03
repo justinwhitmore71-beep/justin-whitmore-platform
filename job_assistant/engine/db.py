@@ -263,7 +263,8 @@ def _seed_users_and_migrate_legacy(db_path: str = DB_PATH):
     DEFAULT_BOOTSTRAP_PASSWORDS = {
         "justin": "Chan.ho.park1",
         "isil": "Recruit-Isil-QvD5yg-6loM",
-        "lindsey": "Recruit-Lindsey-3BqvlR4Y38E"
+        "lindsey": "Recruit-Lindsey-3BqvlR4Y38E",
+        "laurence": "Recruit-Laurence-Welcome2026!"
     }
 
     creds_changed = False

@@ -217,10 +217,17 @@ def _score_for_justin(job_data: Dict[str, Any], profile: Dict[str, Any], traps: 
         export_hit = any(k in combined for k in ["export", "customs", "douane", "awb", "airway bill", "incoterms", "ex-1", "certificate of origin", "cold chain", "logistics", "supply chain", "freight"])
         cs_hit = any(k in combined for k in ["customer service", "customer support", "customer experience", "customer operations", "customer success", "client support", "customer care", "service client"])
         lead_hit = any(k in combined for k in ["team lead", "team manager", "manager", "shift lead", "escalation", "coaching"])
-        gaming_pay_hit = any(k in combined for k in ["igaming", "sports trading", "payment", "billing"])
+        sports_trading_hit = any(k in combined for k in [
+            "sports trading", "sports trader", "odds trader", "sportsbook", "in-play trading",
+            "sports betting", "betting operations", "trading analyst", "odds compiler", "sports pricing"
+        ])
+        gaming_pay_hit = any(k in combined for k in ["igaming", "payment", "billing"])
         admin_hit = any(k in combined for k in ["administrative", "back office", "office coordinator", "order administrator"])
 
-        if sap_hit and export_hit:
+        if sports_trading_hit:
+            exp_pts = 35.0
+            matched.append("Top Priority Match: Direct Sports Trading & Sportsbook Operations (Besedo)")
+        elif sap_hit and export_hit:
             exp_pts = 35.0
             matched.append("Direct SAP + EMEA Export/Logistics match (QuidelOrtho)")
         elif export_hit:
@@ -237,9 +244,9 @@ def _score_for_justin(job_data: Dict[str, Any], profile: Dict[str, Any], traps: 
             exp_pts = max(exp_pts, 28.0)
             matched.append("Customer Support / CX / Operations match")
 
-        if gaming_pay_hit:
+        if gaming_pay_hit and not sports_trading_hit:
             exp_pts = max(exp_pts, 28.0)
-            matched.append("iGaming Sports Trading / Payments operations")
+            matched.append("iGaming / Payments operations")
         if admin_hit:
             exp_pts = max(exp_pts, 22.0)
             matched.append("English Administrative / Back-office operations")
@@ -717,6 +724,130 @@ def _score_for_lindsey(job_data: Dict[str, Any], profile: Dict[str, Any], traps:
     }
 
 
+# =============================================================================
+# 4. LAURENCE WHITMORE SCORER (FRANCE / REMOTE | BILINGUAL FR/EN | ONBOARDING)
+# =============================================================================
+
+def _score_for_laurence(job_data: Dict[str, Any], profile: Dict[str, Any], traps: Dict[str, Any]) -> Dict[str, Any]:
+    title = (job_data.get("title") or "").lower()
+    desc = (job_data.get("description") or "").lower()
+    location = (job_data.get("location") or "").lower()
+    remote_type = (job_data.get("remote_type") or "").lower()
+    combined = f"{title} {location} {desc}"
+
+    prefs = profile.get("preferences", {})
+    weights_cfg = profile.get("scoring_weights", {})
+    excluded = [c.lower() for c in prefs.get("excluded_countries", [])]
+
+    flags = {
+        "disqualified": False,
+        "language_barrier": False,
+        "is_practical_role": False,
+        "scam_risk": traps["is_scam_suspect"]
+    }
+
+    for ex in excluded:
+        if ex and ex in location:
+            flags["disqualified"] = True
+            return {
+                "score": 0,
+                "breakdown": {"experience_skills": 0, "language_compatibility": 0, "location_remote_transit": 0, "work_auth_and_contract": 0, "penalties": 100},
+                "rationale": f"EXCLUDED: Destination '{ex.title()}' excluded in preferences. ({SCORE_DISCLAIMER})",
+                "flags": flags
+            }
+
+    reasons: List[str] = []
+    penalty = 0.0
+
+    # A. Target Roles & Skills Alignment (out of 30)
+    admin_ops = any(k in combined for k in ["administratif", "administrative", "secrétariat", "office", "accueil", "coordination", "gestion", "assistant", "assistante"])
+    client_cs = any(k in combined for k in ["relation client", "service client", "customer care", "support client", "conseiller", "conseillère", "reception"])
+    ops_mgmt = any(k in combined for k in ["opération", "operations", "superviseur", "coordinateur", "manager", "team lead", "planning"])
+
+    if admin_ops and client_cs:
+        exp_pts = 30.0
+        matched = ["Client Relations & Office Administration"]
+    elif admin_ops:
+        exp_pts = 28.0
+        matched = ["General Administration & Office Coordination"]
+    elif client_cs:
+        exp_pts = 28.0
+        matched = ["Customer Relations & Client Services"]
+    elif ops_mgmt:
+        exp_pts = 26.0
+        matched = ["Operations & Operational Coordination"]
+    else:
+        exp_pts = 18.0
+        matched = ["General opportunity (preferences pending confirmation)"]
+
+    reasons.append(f"Role Alignment ({int(exp_pts)}/30): {', '.join(matched)}.")
+
+    # B. Language Compatibility (out of 30) - Native French + Fluent English
+    barrier = detect_foreign_language_barrier(
+        job_data.get("title") or "",
+        job_data.get("description") or "",
+        allowed_languages=["English", "French"]
+    )
+    if barrier:
+        lang_pts = 0.0
+        penalty += 65.0
+        flags["language_barrier"] = True
+        reasons.append(f"Language Barrier (-65): Role requires {barrier['language']} ({barrier['reason']}), outside verified languages (French, English).")
+    else:
+        lang_pts = 30.0
+        reasons.append("Language (30/30): Full French & English language compatibility.")
+
+    # C. Location & Remote Accessibility (out of 25)
+    in_france = any(k in location or k in combined for k in ["france", "orléans", "orleans", "loiret", "paris", "centre-val de loire"])
+    is_remote = ("remote" in remote_type or any(k in combined for k in ["remote", "télétravail"])) and not traps["misleading_remote"]
+
+    if in_france:
+        loc_pts = 25.0
+        reasons.append("Location (25/25): France accessible.")
+    elif is_remote and not traps["us_uk_locked_remote"]:
+        loc_pts = 24.0
+        reasons.append("Location (24/25): Remote position accessible from France.")
+    else:
+        loc_pts = 10.0
+        reasons.append("Location (10/25): International on-site position.")
+
+    # D. Work Authorization (out of 15)
+    auth_pts = 15.0
+    reasons.append("Work Auth (15/15): French national — unrestricted employment rights across France and the European Union.")
+
+    if traps["is_scam_suspect"]:
+        penalty += 60.0
+        reasons.append("Scam Filter (-60): Suspicious listing indicators detected.")
+
+    raw_parts = {
+        "experience_skills": exp_pts,
+        "language_compatibility": lang_pts,
+        "location_remote_transit": loc_pts,
+        "work_auth_and_contract": auth_pts,
+    }
+    max_parts = {
+        "experience_skills": 30.0,
+        "language_compatibility": 30.0,
+        "location_remote_transit": 25.0,
+        "work_auth_and_contract": 15.0,
+    }
+    active_weights = {
+        "experience_skills": float(weights_cfg.get("experience_skills", 30)),
+        "language_compatibility": float(weights_cfg.get("language_compatibility", 30)),
+        "location_remote_transit": float(weights_cfg.get("location_remote_transit", 25)),
+        "work_auth_and_contract": float(weights_cfg.get("work_auth_and_contract", 15)),
+    }
+    total = _scale_weighted_total(raw_parts, max_parts, active_weights, penalty)
+    reasons.append(SCORE_DISCLAIMER)
+
+    return {
+        "score": total,
+        "breakdown": {**{k: int(v) for k, v in raw_parts.items()}, "penalties": int(penalty)},
+        "rationale": " | ".join(reasons),
+        "flags": flags
+    }
+
+
 def evaluate_job_for_user(user_slug: str, job_data: Dict[str, Any], profile_data: Dict[str, Any]) -> Dict[str, Any]:
     """Routes evaluation to the user's personalized AI recruiter model."""
     traps = detect_scam_and_remote_traps(job_data)
@@ -725,6 +856,8 @@ def evaluate_job_for_user(user_slug: str, job_data: Dict[str, Any], profile_data
         return _score_for_isil(job_data, profile_data, traps)
     elif slug == "lindsey":
         return _score_for_lindsey(job_data, profile_data, traps)
+    elif slug == "laurence":
+        return _score_for_laurence(job_data, profile_data, traps)
     else:
         return _score_for_justin(job_data, profile_data, traps)
 

@@ -19,3 +19,5 @@ services:
         value: "Recruit-Isil-QvD5yg-6loM"
       - key: LINDSEY_INIT_PASSWORD
         value: "Recruit-Lindsey-3BqvlR4Y38E"
+      - key: LAURENCE_INIT_PASSWORD
+        value: "Recruit-Laurence-Welcome2026!"
